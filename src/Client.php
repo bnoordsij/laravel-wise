@@ -200,15 +200,17 @@ class Client
             ->retry(3, 100); // Retry failed requests up to 3 times with 100ms delay
 
         // Add proxy
-        if ($this->proxy) {
-            if (!ProxyValidator::verifyProxyWithApiKey($this->proxy, $this->apiKey)) {
-                throw new ApiException('Proxy and API key verification failed.', 500);
+        if (config('wise.verify_proxy')) {
+            if ($this->proxy) {
+                if (!ProxyValidator::verifyProxyWithApiKey($this->proxy, $this->apiKey)) {
+                    throw new ApiException('Proxy and API key verification failed.', 500);
+                }
+                $request->withOptions([
+                    'proxy' => $this->proxy
+                ]);
+            } else {
+                throw new ApiException('Proxy is null', 500);
             }
-            $request->withOptions([
-                'proxy' => $this->proxy
-            ]);
-        } else {
-            throw new ApiException('Proxy is null', 500);
         }
         if (in_array($method, ['post', 'put', 'patch']) && $data !== null) {
             $request->withBody(json_encode($data));
